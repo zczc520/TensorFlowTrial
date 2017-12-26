@@ -21,7 +21,7 @@ y = tf.nn.softmax(tf.matmul(x,W)+b)
 # create loss(builtin cross entropy) Tensor node
 print("create loss Tensor node......")
 logits = tf.matmul(x,W)+b
-cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,labels=y_)
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits,labels=y_))
 
 # create training Operation
 print("create training operation......")
