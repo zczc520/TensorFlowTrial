@@ -183,7 +183,7 @@ def run_training():
 
       # Save a checkpoint and evaluate the model periodically.
       if (step + 1) % 1000 == 0 or (step + 1) == FLAGS.max_steps:
-        checkpoint_file = os.path.join(FLAGS.log_dir, 'model.ckpt')
+        checkpoint_file = os.path.join(FLAGS.model_dir, 'model.ckpt')
         saver.save(sess, checkpoint_file, global_step=step)
         # Evaluate against the training set.
         print('Training Data Eval:')
@@ -206,14 +206,50 @@ def run_training():
                 images_placeholder,
                 labels_placeholder,
                 data_sets.test)
+  print(eval_correct.name)
 
 
 def main(_):
   if tf.gfile.Exists(FLAGS.log_dir):
     tf.gfile.DeleteRecursively(FLAGS.log_dir)
+  if tf.gfile.Exists(FLAGS.model_dir):
+    tf.gfile.DeleteRecursively(FLAGS.model_dir)
   tf.gfile.MakeDirs(FLAGS.log_dir)
+  tf.gfile.MakeDirs(FLAGS.model_dir)
   run_training()
 
+def restore(_): 
+    # Get the sets of images and labels for training, validation, and
+    # test on MNIST.
+    data_sets = input_data.read_data_sets(FLAGS.input_data_dir, FLAGS.fake_data)
+    with tf.Graph().as_default(): 
+        images_placeholder, labels_placeholder = placeholder_inputs(
+            FLAGS.batch_size)
+
+        # Build a Graph that computes predictions from the inference model.
+        logits = mnist.inference(images_placeholder,
+                                 FLAGS.hidden1,
+                                 FLAGS.hidden2)
+
+        # Add to the Graph the Ops for loss calculation.
+        loss = mnist.loss(logits, labels_placeholder)
+
+        # Add the Op to compare the logits to the labels during evaluation.
+        eval_correct = mnist.evaluation(logits, labels_placeholder)
+
+        # Restore model
+        saver = tf.train.Saver()
+        print(eval_correct.name);
+        with tf.Session() as sess:
+            ckpt = tf.train.get_checkpoint_state(FLAGS.model_dir)
+            saver.restore(sess,ckpt.model_checkpoint_path)
+            steps = data_sets.test.num_examples // FLAGS.batch_size
+            accuracy = 0
+            for i in range(steps):
+                batchx,batchy = data_sets.test.next_batch(FLAGS.batch_size)
+                accuracy += sess.run(eval_correct,feed_dict={images_placeholder:batchx,
+                        labels_placeholder:batchy})
+            print("accuracy: {}".format(accuracy/float(steps*FLAGS.batch_size)))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
@@ -250,16 +286,20 @@ if __name__ == '__main__':
   parser.add_argument(
       '--input_data_dir',
       type=str,
-      default=os.path.join(os.getenv('TEST_TMPDIR', '/tmp'),
-                           'tensorflow/mnist/input_data'),
+      default='MNIST-Data',
       help='Directory to put the input data.'
   )
   parser.add_argument(
       '--log_dir',
       type=str,
-      default=os.path.join(os.getenv('TEST_TMPDIR', '/tmp'),
-                           'tensorflow/mnist/logs/fully_connected_feed'),
+      default='Logs',
       help='Directory to put the log data.'
+  )
+  parser.add_argument(
+      '--model_dir',
+      type=str,
+      default='Models',
+      help='Directory to put the saved model'
   )
   parser.add_argument(
       '--fake_data',
@@ -267,6 +307,15 @@ if __name__ == '__main__':
       help='If true, uses fake data for unit testing.',
       action='store_true'
   )
-
+  parser.add_argument(
+      '--restore',
+      type=bool,
+      default=False,
+      help='Restore trained model from model.ckpt'
+  )
   FLAGS, unparsed = parser.parse_known_args()
-tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+
+if FLAGS is None or not FLAGS.restore:
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+else:
+    tf.app.run(main=restore, argv=[sys.argv[0]] + unparsed)
