@@ -17,6 +17,7 @@ b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b')
 c = tf.matmul(a, b)
 
 # Runs the op.
+print('With log:')
 print(sess.run(c))
 
 
@@ -24,7 +25,10 @@ print(sess.run(c))
 #  we set a parameter in our session:
 config = tf.ConfigProto()
 config.allow_soft_placement = True
+config.log_device_placement = True
 sess_soft = tf.Session(config=config)
+print('With soft session:')
+print(sess_soft.run(c))
 
 # GPUs
 #---------------------------------
