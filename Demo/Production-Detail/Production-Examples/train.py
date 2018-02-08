@@ -14,6 +14,7 @@ import io
 import requests
 import numpy as np
 import tensorflow as tf
+import chardet
 from zipfile import ZipFile
 from tensorflow.python.framework import ops
 ops.reset_default_graph()
@@ -43,14 +44,19 @@ def get_data(storage_folder=FLAGS.storage_folder, data_file="text_data.txt"):
         os.makedirs(storage_folder)
     
     if not os.path.isfile(os.path.join(storage_folder, data_file)):
-        zip_url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/00228/smsspamcollection.zip'
-        r = requests.get(zip_url)
-        z = ZipFile(io.BytesIO(r.content))
+    	# Can't get this file in the wall...
+        # zip_url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/00228/smsspamcollection.zip'
+        # r = requests.get(zip_url)
+        # z = ZipFile(io.BytesIO(r.content))
+        z = ZipFile('smsspamcollection.zip','r')
         file = z.read('SMSSpamCollection')
+        print chardet.detect(file)
         # Format Data
-        text_data = file.decode()
+        text_data = file.decode('utf-8')
         text_data = text_data.encode('ascii',errors='ignore')
-        text_data = text_data.decode().split('\n')
+        # original code is wrong, we dont need to decode asciistring into unicodestring
+        # text_data = text_data.decode().split('\n')
+        text_data = text_data.split('\n')
 
         # Save data to text file
         with open(os.path.join(storage_folder, data_file), 'w') as file_conn:

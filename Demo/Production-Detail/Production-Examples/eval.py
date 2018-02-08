@@ -50,7 +50,10 @@ def get_input_data():
     For this function, we just prompt the user for a text message to evaluate
         But this function could also potentially read a file in as well.
     """
-    input_text = input("Please enter a text message to evaluate: ")
+    # we can input anything with raw_input, such as hello world
+    # we must use '' to identify string with input, such as 'hello world'
+    # input_text = input("Please enter a text message to evaluate: ")
+    input_text = raw_input("Please enter a text message to evaluate: ")
     vocab_processor = load_vocab()
     return(process_data(input_text, vocab_processor))
 
@@ -87,10 +90,12 @@ def main(args):
             x_data_ph = graph.get_operation_by_name("x_data_ph").outputs[0]
             dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
             probability_outputs = graph.get_operation_by_name("probability_outputs").outputs[0]
+            print probability_outputs
 
             # Make the prediction
             eval_feed_dict = {x_data_ph: x_data, dropout_keep_prob: 1.0}
             probability_prediction = sess.run(tf.reduce_mean(probability_outputs, 0), eval_feed_dict)
+            print probability_prediction
             
             # Print output (Or save to file or DB connection?)
             print('Probability of Spam: {:.4}'.format(probability_prediction[1]))
