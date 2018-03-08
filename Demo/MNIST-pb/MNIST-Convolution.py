@@ -3,7 +3,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 from tensorflow.python.framework import graph_util
 import os
 
-# global variable
+# global configure
 DATA_DIR = "MNIST-Data"
 MODEL_DIR = "Models"
 PB_FILENAME = "CNN.pb"
@@ -11,6 +11,7 @@ LOG_FILENAME = "MNIST-Convolution.log"
 BATCH_SIZE = 50
 TRAIN_TIMES = 100
 KEEP_PROB = 0.5
+# variable
 W_CONV1_NAME = "w_conv1"
 B_CONV1_NAME = "b_conv1"
 W_CONV2_NAME = "w_conv2"
@@ -19,6 +20,10 @@ W_CONN3_NAME = "w_conn3"
 B_CONN3_NAME = "b_conn3"
 W_FINAL5_NAME = "w_final5"
 B_FINAL5_NAME = "b_final5"
+# placeholder
+INPUT_NAME = "x"
+LABEL_NAME = "y_"
+KEEP_PROB_NAME = "keep_prob"
 
 # define functions to create variable Tensor node
 def create_weight_node(shape,name):
@@ -42,8 +47,8 @@ mnist = input_data.read_data_sets(DATA_DIR,one_hot=True)
 
 # create input Tensor node
 print("Create input node......")
-x = tf.placeholder(tf.float32,shape=(None,784))
-y_ = tf.placeholder(tf.float32,shape=(None,10))
+x = tf.placeholder(tf.float32,shape=(None,784),name=INPUT_NAME)
+y_ = tf.placeholder(tf.float32,shape=(None,10),name=LABEL_NAME)
 
 # First Layer - Convolution Layer
 print("Create First Layer......")
@@ -69,7 +74,7 @@ conn3 = tf.nn.relu(tf.matmul(x3,W_conn3)+b_conn3)
 
 # Fourth Layer - Dropout Layer
 print("Create Fourth Layer......")
-keep_prob=tf.placeholder(tf.float32) # keep probability
+keep_prob=tf.placeholder(tf.float32,name=KEEP_PROB_NAME) # keep probability
 drop4 = tf.nn.dropout(conn3,keep_prob)
 
 # Final Layer - Readout Layer
