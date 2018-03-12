@@ -3,6 +3,7 @@ import tensorflow as tf
 import os
 from tensorflow.python.framework import graph_util
 from tensorflow.examples.tutorials.mnist import input_data
+import numpy as np
 
 dom=xml.dom.minidom.parse("conf.xml")
 root=dom.documentElement
@@ -30,6 +31,7 @@ model_path = os.path.join(MODEL_DIR,PB_FILENAME)
 # get mnist data
 mnist = input_data.read_data_sets(DATA_DIR,one_hot=True)
 
+'''
 # load model from pb file
 with tf.Session() as sess:
 	output_graph_def = tf.GraphDef()
@@ -65,4 +67,44 @@ with tf.Session() as sess:
 	log_file.write("Final accuracy: {}\n".format(result))
 
 	log_file.close()
+	'''
+
+def haveNonZero(array):
+	for i in array:
+		if (i-0).any():
+			return True
+	return False
+
+np.set_printoptions(threshold='nan')
+with tf.Session() as sess:
+	output_graph_def = tf.GraphDef()
+	with open(model_path,'rb') as fd:
+		output_graph_def.ParseFromString(fd.read())
+		_ = tf.import_graph_def(output_graph_def,name="")
+
+		pool1 = sess.graph.get_tensor_by_name("testpool1:0")
+		pool2 = sess.graph.get_tensor_by_name("testpool2:0")
+		relu3 = sess.graph.get_tensor_by_name("testrelu3:0")
+		final = sess.graph.get_tensor_by_name("final:0")
+		accuracy = sess.graph.get_tensor_by_name("accuracy:0")
+		x = sess.graph.get_tensor_by_name(INPUT_NAME+":0")
+		y_ = sess.graph.get_tensor_by_name(LABEL_NAME+":0")
+		keep_prob = sess.graph.get_tensor_by_name(KEEP_PROB_NAME+":0")
+
+		index = 846
+		print len(mnist.test.images)
+		cast = tf.cast(tf.equal(tf.argmax(final,1),tf.argmax(y_,1)),tf.float32)
+		print mnist.test.images[index]
+		print mnist.test.labels[index]
+		print sess.run(cast,feed_dict={x:np.array(mnist.test.images[index]).reshape([1,784]),y_:np.array(mnist.test.labels[index]).reshape([1,10]),keep_prob:1})
+
+		'''sum = 0
+		for i in range(845):
+			array = sess.run(cast,feed_dict={x:np.array(mnist.test.images[i]).reshape([1,784]),y_:np.array(mnist.test.labels[i]).reshape([1,10]),keep_prob:1})
+			if array[0] == 1.0:
+				sum = sum + 1
+		print sum'''
+
+
+
 
